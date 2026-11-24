@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Market & Currency Tracker</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body {
+      margin: 0; background: #0b1120; color: #f8fafc;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .container {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 16px; padding: 24px; width: 100%; max-width: 480px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 18px;
+    }
+    h1 { font-size: 18px; margin: 0; color: #38bdf8; }
+    .live-badge {
+      background: #064e3b; color: #34d399; border: 1px solid #059669;
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dot {
+      width: 8px; height: 8px; background: #34d399; border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .card {
+      background: #0f172a; border: 1px solid #1e293b;
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .label { font-size: 14px; color: #94a3b8; font-weight: 600; }
+    .sub-label { font-size: 11px; color: #64748b; display: block; margin-top: 2px; }
+    .value { font-size: 18px; font-weight: 800; color: #facc15; }
+    .footer {
+      text-align: center; font-size: 12px; color: #64748b; margin-top: 14px;
+    }
+    button {
+      width: 100%; background: #38bdf8; color: #0f172a; border: none;
+      padding: 10px; border-radius: 8px; font-weight: 700; font-size: 14px;
+      cursor: pointer; margin-top: 8px;
+    }
+    button:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>LIVE MARKET TRACKER</h1>
+      <div class="live-badge"><div class="dot"></div> REAL API</div>
+    </div>
+
+    <div class="card">
+      <div>
+        <span class="label">1 USD to BDT</span>
+        <span class="sub-label">US Dollar to Bangladeshi Taka</span>
+      </div>
+      <div class="value" id="usd-bdt">Loading...</div>
+    </div>
+
+    <div class="card">
+      <div>
+        <span class="label">1 EUR to BDT</span>
+        <span class="sub-label">Euro to Bangladeshi Taka</span>
+      </div>
+      <div class="value" id="eur-bdt">Loading...</div>
+    </div>
+
+    <div class="card">
+      <div>
+        <span class="label">1 GBP to BDT</span>
+        <span class="sub-label">British Pound to Taka</span>
+      </div>
+      <div class="value" id="gbp-bdt">Loading...</div>
+    </div>
+
+    <div class="card">
+      <div>
+        <span class="label">Bitcoin (BTC)</span>
+        <span class="sub-label">Live Price in USD</span>
+      </div>
+      <div class="value" id="btc-usd" style="color:#4ade80;">Loading...</div>
+    </div>
+
+    <button onclick="fetchLiveMarketData()">Refresh Live Rates Now</button>
+    <div class="footer" id="lastUpdated">Connecting to live server...</div>
+  </div>
+
+  <script>
+    async function fetchLiveMarketData() {
+      const statusEl = document.getElementById("lastUpdated");
+      statusEl.textContent = "Fetching live market data...";
+
+      try {
+        // 1. Fetch Real-Time Currency Rates (USD base)
+        const currencyRes = await fetch("https://er-api.com");
+        const currencyData = await currencyRes.json();
+
+        const bdtRate = currencyData.rates.BDT;
+        const eurRate = currencyData.rates.EUR;
+        const gbpRate = currencyData.rates.GBP;
+
+        document.getElementById("usd-bdt").textContent = `৳ ${bdtRate.toFixed(2)}`;
+        document.getElementById("eur-bdt").textContent = `৳ ${(bdtRate / eurRate).toFixed(2)}`;
+        document.getElementById("gbp-bdt").textContent = `৳ ${(bdtRate / gbpRate).toFixed(2)}`;
+
+        // 2. Fetch Real-Time Bitcoin Price from Coinbase Public API
+        const btcRes = await fetch("https://coinbase.com");
+        const btcData = await btcRes.json();
+        const btcPrice = parseFloat(btcData.data.amount).toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD"
+        });
+
+        document.getElementById("btc-usd").textContent = btcPrice;
+
+        const now = new Date().toLocaleTimeString();
+        statusEl.textContent = `Last Updated: ${now} (Auto-updates every 15s)`;
+      } catch (error) {
+        statusEl.textContent = "Network error! Please check your internet connection.";
+      }
+    }
+
+    // Load immediately on open
+    fetchLiveMarketData();
+
+    // Auto-update every 15 seconds
+    setInterval(fetchLiveMarketData, 15000);
+  </script>
+</body>
+</html>
